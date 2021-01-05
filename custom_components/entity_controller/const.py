@@ -22,6 +22,7 @@ DOMAIN_SHORT = "ec"
 
 # services
 SERVICE_CLEAR_BLOCK = "clear_block"
+SERVICE_SET_TIMER = "set_timer"
 SERVICE_ENABLE_STAY_MODE = "enable_stay_mode"
 SERVICE_DISABLE_STAY_MODE = "disable_stay_mode"
 SERVICE_SET_NIGHT_MODE = "set_night_mode"
