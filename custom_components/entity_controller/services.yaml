@@ -11,6 +11,9 @@ set_timer:
     entity_id:
       description: Name(s) of entities to change.
       example: 'entity_controller.motion_light'
+    timer:
+      description: Delay in seconds for the new timer, defaults to config delay
+      example: 90
       
 set_stay_on:
   description: Change the stay to on

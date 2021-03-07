@@ -30,6 +30,7 @@ SERVICE_SET_NIGHT_MODE = "set_night_mode"
 #configuration
 CONF_START_TIME = 'start_time'
 CONF_END_TIME = 'end_time'
+CONF_TIMER = 'timer'
 
 # Transition Behaviours
 CONF_BEHAVIOURS = 'behaviours'

@@ -282,15 +282,15 @@ async def async_setup(hass, config):
     machine.add_transition(
         trigger="block_timer_expires",
         source="blocked",
-        dest="active",
-        conditions=["is_state_entities_on", "is_event_sensor"],
+        dest="idle",
+        #conditions=["is_state_entities_on", "is_event_sensor"],
     )
-    machine.add_transition(
-        trigger="block_timer_expires",
-        source="blocked",
-        dest="active",
-        conditions=["is_state_entities_on", "is_sensor_on"],
-    )  # This could be duration && on, but it will also work for any event sensor, so it's simpler to just write 'on'
+    # machine.add_transition(
+    #     trigger="block_timer_expires",
+    #     source="blocked",
+    #     dest="idle",
+    #     conditions=["is_sensor_on"],
+    # )  # This could be duration && on, but it will also work for any event sensor, so it's simpler to just write 'on'
     machine.add_transition(
         trigger="block_timer_expires",
         source="blocked",
@@ -611,6 +611,8 @@ class Model:
             self.log.debug("state_entity_state_change :: Ignoring this state change because it came from %s" % (new.context.id))
             return
 
+        #self.log.debug("state_entity_state_change :: Ignoring ALL state changes")
+        #return
         #  If the state changed, we definitely want to handle the transition. If only attributes changed, we'll check if the new attributes are significant (i.e., not being ignored).
         try:
             if not old or not new or old == 'off' or new == 'off':
@@ -700,13 +702,20 @@ class Model:
         self.block_timer_expires()
 
     def set_timer(self):
-        self.log.info("set_timer :: Light params: " + str(self.lightParams))       
+
+        self.log.info("set_timer :: Light params: " + str(self.lightParams))
+        self.log.info("previous delay parm " + str(self.previous_delay))
         self._cancel_timer() 
         self.update(reset_at=datetime.now())        
         self.backoff_count = 0
         self.update(backoff_count=self.backoff_count)
         
-        self.previous_delay = self.lightParams.get(CONF_DELAY, DEFAULT_DELAY) #Set back to initial
+        #if timer is None:
+        #    timer = self.lightParams.get(CONF_DELAY, DEFAULT_DELAY) #Set back to initial
+                
+        #self.previous_delay = timer
+
+        #self.previous_delay = self.lightParams.get(CONF_DELAY, DEFAULT_DELAY) #Set back to initial
         self.update(delay=self.previous_delay)
 
         expiry_time = datetime.now() + timedelta(seconds=self.previous_delay)
@@ -1200,6 +1209,7 @@ class Model:
         self.update(start_time=parsed_start)
         
         if self.is_state_entities_on():
+            self.enable()            #why did I disable this?
             self.blocked()
         else:
             self.enable()
