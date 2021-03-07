@@ -283,15 +283,15 @@ async def async_setup(hass, config):
     machine.add_transition(
         trigger="block_timer_expires",
         source="blocked",
-        dest="active",
-        conditions=["is_state_entities_on", "is_event_sensor"],
+        dest="idle",
+        #conditions=["is_state_entities_on", "is_event_sensor"],
     )
-    machine.add_transition(
-        trigger="block_timer_expires",
-        source="blocked",
-        dest="active",
-        conditions=["is_state_entities_on", "is_sensor_on"],
-    )  # This could be duration && on, but it will also work for any event sensor, so it's simpler to just write 'on'
+    # machine.add_transition(
+    #     trigger="block_timer_expires",
+    #     source="blocked",
+    #     dest="idle",
+    #     conditions=["is_sensor_on"],
+    # )  # This could be duration && on, but it will also work for any event sensor, so it's simpler to just write 'on'
     machine.add_transition(
         trigger="block_timer_expires",
         source="blocked",
@@ -357,6 +357,7 @@ async def async_setup(hass, config):
 class EntityController(entity.Entity):
     from .entity_services import (
         async_entity_service_clear_block as async_clear_block,
+        async_entity_service_set_timer as async_set_timer,
         async_entity_service_enable_stay_mode as async_enable_stay_mode,
         async_entity_service_disable_stay_mode as async_disable_stay_mode,
         async_entity_service_set_night_mode as async_set_night_mode,
@@ -706,6 +707,28 @@ class Model:
     def block_timer_expire(self):
         self.log.debug("block_timer_expire :: Blocked Timer expired")
         self.block_timer_expires()
+
+    def set_timer(self):
+
+        self.log.info("set_timer :: Light params: " + str(self.lightParams))
+        self.log.info("previous delay parm " + str(self.previous_delay))
+        self._cancel_timer() 
+        self.update(reset_at=datetime.now())        
+        self.backoff_count = 0
+        self.update(backoff_count=self.backoff_count)
+        
+        #if timer is None:
+        #    timer = self.lightParams.get(CONF_DELAY, DEFAULT_DELAY) #Set back to initial
+                
+        #self.previous_delay = timer
+
+        #self.previous_delay = self.lightParams.get(CONF_DELAY, DEFAULT_DELAY) #Set back to initial
+        self.update(delay=self.previous_delay)
+
+        expiry_time = datetime.now() + timedelta(seconds=self.previous_delay)
+        self.timer_handle = Timer(self.previous_delay, self.timer_expire)
+        self.timer_handle.start()
+        self.update(expires_at=expiry_time)    
 
     # =====================================================
     # S T A T E   M A C H I N E   C O N D I T I O N S

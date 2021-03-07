@@ -35,11 +35,13 @@ import homeassistant.util.dt as dt_util
 
 from .const import (
     SERVICE_CLEAR_BLOCK,
+    SERVICE_SET_TIMER,
     SERVICE_ENABLE_STAY_MODE,
     SERVICE_DISABLE_STAY_MODE,
     SERVICE_SET_NIGHT_MODE,
     CONF_START_TIME,
     CONF_END_TIME,
+    CONF_TIMER
 )
 
 TIME_STR_FORMAT = "%H:%M:%S"
@@ -49,6 +51,7 @@ def async_setup_entity_services(component: EntityComponent):
 
     component.logger.debug("Setting up entity services")
     component.async_register_entity_service(SERVICE_CLEAR_BLOCK, {}, "async_clear_block")
+    component.async_register_entity_service(SERVICE_SET_TIMER, { vol.Optional(CONF_TIMER): cv.positive_int }, "async_set_timer")
     component.async_register_entity_service(SERVICE_ENABLE_STAY_MODE, {}, "async_enable_stay_mode")
     component.async_register_entity_service(SERVICE_DISABLE_STAY_MODE, {}, "async_disable_stay_mode")
     component.async_register_entity_service(
@@ -57,6 +60,17 @@ def async_setup_entity_services(component: EntityComponent):
         "async_set_night_mode")
 
     return True
+
+def async_entity_service_set_timer(self, timer):
+    """ Force delay back to 30s"""
+
+    self.model.log.debug("Reset timer: " + str(timer))
+
+    if(self.model is None or self.model.state != 'active_timer'):
+        return
+
+    self.model.previous_delay = timer
+    self.model.set_timer()
 
 def async_entity_service_clear_block(self):
     """ Clear the block property, if set"""
