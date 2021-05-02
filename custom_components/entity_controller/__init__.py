@@ -201,16 +201,16 @@ async def async_setup(hass, config):
         dest="active",
         conditions=["is_state_entities_off"],
     )
-    machine.add_transition(
-        trigger="sensor_on",
-        source="idle",
-        dest="blocked",
-        conditions=["is_state_entities_on"],
-    )
+    #machine.add_transition(
+    #    trigger="sensor_on",
+    #    source="idle",
+    #    dest="blocked",
+    #    conditions=["is_state_entities_on"],
+    #)
     machine.add_transition(trigger="enable", source="idle", dest=None, conditions=["is_state_entities_off"])
 
     # Blocked
-    machine.add_transition(trigger="enable", source="blocked", dest="idle", conditions=["is_state_entities_off"])
+    #machine.add_transition(trigger="enable", source="blocked", dest="idle", conditions=["is_state_entities_off"]) # Controls blocked when turning off entity
     machine.add_transition(
         trigger="sensor_on", source="blocked", dest="blocked"
     )  # re-entering self-transition (on_enter callback executed.)
@@ -306,8 +306,8 @@ async def async_setup(hass, config):
         dest="idle",
         conditions=["is_state_entities_off"]
     )
-    machine.add_transition(trigger='control', source='active_timer',
-                           dest='blocked', conditions=['is_state_entities_on'])
+    #machine.add_transition(trigger='control', source='active_timer',
+    #                       dest='blocked', conditions=['is_state_entities_on'])
 
     # machine.add_transition(trigger='sensor_off',           source='active_stay_on',    dest=None)
     # machine.add_transition(trigger="timer_expires", source="active_stay_on", dest=None)
@@ -803,9 +803,9 @@ class Model:
                 state = 'off'
                 return None
 
-            if self.matches(state, self.STATE_ON_STATE):
-                self.log.debug("State entities are ON. [%s]", e)
-                return e
+            #if self.matches(state, self.STATE_ON_STATE):
+            #    self.log.debug("State entities are ON. [%s]", e)
+            #    return e
         self.log.debug("State entities are OFF.")
         return None
 
