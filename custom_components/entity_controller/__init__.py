@@ -18,7 +18,7 @@ along with Entity Controller.  If not, see <https://www.gnu.org/licenses/>.
 """
 Entity controller component for Home Assistant.
 Maintainer:       Daniel Mason
-Version:          v9.2.0
+Version:          v9.2.2
 Project Page:     https://danielbkr.net/projects/entity-controller/
 Documentation:    https://github.com/danobot/entity-controller
 """
@@ -105,7 +105,7 @@ from .entity_services import (
 
 
 
-VERSION = '9.2.0'
+VERSION = '9.2.2'
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -201,15 +201,16 @@ async def async_setup(hass, config):
         dest="active",
         conditions=["is_state_entities_off"],
     )
-    machine.add_transition(
-        trigger="sensor_on",
-        source="idle",
-        dest="blocked",
-        conditions=["is_state_entities_on"],
-    )
+    #machine.add_transition(
+    #    trigger="sensor_on",
+    #    source="idle",
+    #    dest="blocked",
+    #    conditions=["is_state_entities_on"],
+    #)
+    machine.add_transition(trigger="enable", source="idle", dest=None, conditions=["is_state_entities_off"])
 
     # Blocked
-    machine.add_transition(trigger="enable", source="blocked", dest="idle", conditions=["is_state_entities_off"])
+    #machine.add_transition(trigger="enable", source="blocked", dest="idle", conditions=["is_state_entities_off"]) # Controls blocked when turning off entity
     machine.add_transition(
         trigger="sensor_on", source="blocked", dest="blocked"
     )  # re-entering self-transition (on_enter callback executed.)
@@ -305,8 +306,8 @@ async def async_setup(hass, config):
         dest="idle",
         conditions=["is_state_entities_off"]
     )
-    machine.add_transition(trigger='control', source='active_timer',
-                           dest='blocked', conditions=['is_state_entities_on'])
+    #machine.add_transition(trigger='control', source='active_timer',
+    #                       dest='blocked', conditions=['is_state_entities_on'])
 
     # machine.add_transition(trigger='sensor_off',           source='active_stay_on',    dest=None)
     # machine.add_transition(trigger="timer_expires", source="active_stay_on", dest=None)
@@ -373,7 +374,7 @@ class EntityController(entity.Entity):
             self.model = Model(hass, config, machine, self)
         except AttributeError as e:
             _LOGGER.error(
-                "Configuration error! Please ensure you use plural keys for lists. e.g. sensors, entities" + e
+                "Configuration error! Please ensure you use plural keys for lists. e.g. sensors, entities." + e
             )
         event.async_call_later(hass, 1, self.do_update)
 
@@ -547,6 +548,14 @@ class Model:
         """ State change callback for sensor entities """
         self.log.debug("sensor_state_change :: %10s Sensor state change to: %s" % ( pprint.pformat(entity), new.state))
         self.log.debug("sensor_state_change :: state: " +  pprint.pformat(self.state))
+
+        try:
+            if new.state == old.state:
+                self.log.debug("sensor_state_change :: Ignore attribute only change")
+                return
+        except AttributeError:
+            self.log.debug("sensor_state_change :: old NoneType")
+            pass
 
         if self.matches(new.state, self.SENSOR_ON_STATE) and (
             self.is_idle() or self.is_active_timer() or self.is_blocked()
@@ -731,10 +740,10 @@ class Model:
             s = self.hass.states.get(e)
             try:
                 state = s.state
-            except AttributeError as e:
+            except AttributeError as ex:
                 self.log.error(
-                    "Configuration error! Override Entity ({}) does not exist. Please check for spelling and typos.".format(
-                        e
+                    "Potential configuration error: Override Entity ({}) does not exist (yet). Please check for spelling and typos. {}".format(
+                        e, ex
                     )
                 )
                 return None
@@ -761,10 +770,10 @@ class Model:
             s = self.hass.states.get(e)
             try:
                 state = s.state
-            except AttributeError as e:
+            except AttributeError as ex:
                 self.log.error(
-                    "Configuration error! Sensor Entity ({}) does not exist. Please check for spelling and typos.".format(
-                        e
+                    "Potential configuration error: Sensor Entity ({}) does not exist (yet). Please check for spelling and typos. {}".format(
+                        e, ex
                     )
                 )
                 return None
@@ -787,18 +796,18 @@ class Model:
             self.log.info(s)
             try:
                 state = s.state
-            except AttributeError as e:
+            except AttributeError as ex:
                 self.log.error(
-                    "Configuration error! State Entity ({}) does not exist. Please check for spelling and typos.".format(
-                        e
+                    "Potential configuration error: State Entity ({}) does not exist (yet). Please check for spelling and typos. {}".format(
+                        e, ex
                     )
                 )
                 state = 'off'
                 return None
 
-            if self.matches(state, self.STATE_ON_STATE):
-                self.log.debug("State entities are ON. [%s]", e)
-                return e
+            #if self.matches(state, self.STATE_ON_STATE):
+            #    self.log.debug("State entities are ON. [%s]", e)
+            #    return e
         self.log.debug("State entities are OFF.")
         return None
 
@@ -1207,7 +1216,7 @@ class Model:
         )
 
         self.update(start_time=parsed_start)
-        
+
         if self.is_state_entities_on():
             self.enable()            #why did I disable this?
             self.blocked()
