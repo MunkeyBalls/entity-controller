@@ -620,6 +620,8 @@ class Model:
             self.log.debug("state_entity_state_change :: Ignoring this state change because it came from %s" % (new.context.id))
             return
 
+        #self.log.debug("state_entity_state_change :: Ignoring ALL state changes")
+        #return
         #  If the state changed, we definitely want to handle the transition. If only attributes changed, we'll check if the new attributes are significant (i.e., not being ignored).
         try:
             if not old or not new or old == 'off' or new == 'off':
@@ -1216,6 +1218,7 @@ class Model:
         self.update(start_time=parsed_start)
 
         if self.is_state_entities_on():
+            self.enable()            #why did I disable this?
             self.blocked()
         else:
             self.enable()
